@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Layar QR Absensi Kantor - Live Display</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Dayjs -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/id.js"></script>
+  <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white min-h-screen flex flex-col justify-between p-6 select-none">
+
+  <!-- Header Bar -->
+  <header class="flex flex-col sm:flex-row items-center justify-between border-b border-indigo-800/50 pb-4 gap-4">
+    <div class="flex items-center space-x-4">
+      <div id="companyLogoContainer" class="w-14 h-14 rounded-2xl bg-white/10 p-2 flex items-center justify-center border border-white/20 shadow-lg">
+        <i data-lucide="building" class="w-8 h-8 text-indigo-400"></i>
+      </div>
+      <div>
+        <h1 id="companyName" class="text-2xl font-bold tracking-tight text-white">PT Nusantara Solusi Digital</h1>
+        <p id="companyAddress" class="text-sm text-indigo-200">Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan</p>
+      </div>
+    </div>
+
+    <!-- Live Digital Clock -->
+    <div class="text-center sm:text-right">
+      <div id="liveClock" class="text-4xl sm:text-5xl font-mono font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">
+        00:00:00
+      </div>
+      <div id="liveDate" class="text-sm sm:text-base font-medium text-indigo-300">
+        Memuat tanggal...
+      </div>
+    </div>
+  </header>
+
+  <!-- Center Content: Big QR Code Card -->
+  <main class="my-auto flex flex-col items-center justify-center py-6">
+    <div class="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 sm:p-10 shadow-2xl flex flex-col items-center max-w-lg w-full text-center relative overflow-hidden">
+      
+      <!-- Glow ambient effect -->
+      <div class="absolute -top-24 -left-24 w-48 h-48 bg-indigo-500/30 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-500/30 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Badge Shift Status -->
+      <div class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 mb-6">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping mr-2"></span>
+        QR Code Absensi Aktif • Geofence Validated
+      </div>
+
+      <!-- QR Code Image Box -->
+      <div class="bg-white p-5 rounded-2xl shadow-inner border-4 border-indigo-400/30 mb-6 transition-transform duration-300 hover:scale-105">
+        <img id="qrImage" src="" alt="Office QR Code" class="w-64 h-64 sm:w-72 sm:h-72 object-contain rounded-lg">
+      </div>
+
+      <!-- Instruction -->
+      <h2 class="text-xl font-bold text-white mb-2">Pindai untuk Absen Masuk & Pulang</h2>
+      <p class="text-sm text-indigo-200 mb-6 max-w-sm">
+        Buka menu <b>Absensi</b> di aplikasi smartphone Anda, pastikan GPS aktif, lalu scan kode QR di atas.
+      </p>
+
+      <!-- Token Refresh Progress Bar -->
+      <div class="w-full bg-white/10 rounded-full h-2 mb-2 overflow-hidden">
+        <div id="progressBar" class="bg-gradient-to-r from-blue-400 to-indigo-500 h-2 rounded-full transition-all duration-1000" style="width: 100%;"></div>
+      </div>
+      <p id="refreshText" class="text-xs text-indigo-300 font-mono">Pembaruan token dalam 60 detik</p>
+    </div>
+  </main>
+
+  <!-- Footer Bar -->
+  <footer class="flex flex-col sm:flex-row items-center justify-between border-t border-indigo-800/50 pt-4 text-xs text-indigo-300 gap-4">
+    <div class="flex items-center space-x-2">
+      <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+      <span>Sistem Absensi Karyawan Terintegrasi & Anti-Fraud</span>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <button onclick="toggleFullScreen()" class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition flex items-center space-x-1.5">
+        <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+        <span>Layar Penuh (F11)</span>
+      </button>
+      <a href="/" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center space-x-1.5">
+        <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+        <span>Ke Dashboard</span>
+      </a>
+    </div>
+  </footer>
+
+  <script>
+    dayjs.locale('id');
+    let refreshSeconds = 60;
+    let currentCountdown = 60;
+
+    // Live Clock
+    function updateClock() {
+      const now = dayjs();
+      document.getElementById('liveClock').innerText = now.format('HH:mm:ss');
+      document.getElementById('liveDate').innerText = now.format('dddd, DD MMMM YYYY');
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Fetch Public Settings & QR
+    async function loadQR() {
+      try {
+        const res = await fetch('/api/pengaturan/qr');
+        const data = await res.json();
+        if (data.success && data.qr_image) {
+          document.getElementById('qrImage').src = data.qr_image;
+        }
+
+        const pubRes = await fetch('/api/pengaturan/public');
+        const pubData = await pubRes.json();
+        if (pubData.success && pubData.settings) {
+          const s = pubData.settings;
+          if (s.company_name) document.getElementById('companyName').innerText = s.company_name;
+          if (s.company_address) document.getElementById('companyAddress').innerText = s.company_address;
+          if (s.company_logo) {
+            document.getElementById('companyLogoContainer').innerHTML = `<img src="${s.company_logo}" alt="Logo" class="w-full h-full object-contain">`;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching QR:', err);
+      }
+    }
+
+    // Refresh Countdown
+    setInterval(() => {
+      currentCountdown--;
+      const percent = (currentCountdown / refreshSeconds) * 100;
+      document.getElementById('progressBar').style.width = percent + '%';
+      document.getElementById('refreshText').innerText = `Pembaruan token dalam ${currentCountdown} detik`;
+
+      if (currentCountdown <= 0) {
+        currentCountdown = refreshSeconds;
+        loadQR();
+      }
+    }, 1000);
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => alert(err.message));
+      } else {
+        if (document.exitFullscreen) document.exitFullscreen();
+      }
+    }
+
+    loadQR();
+    lucide.createIcons();
+  </script>
+</body>
+</html>

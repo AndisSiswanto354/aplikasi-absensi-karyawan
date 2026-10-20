@@ -1,0 +1,1903 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aplikasi Absensi Karyawan - Sistem Presensi Modern</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Leaflet CSS & JS for GPS Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- HTML5 QR Code Scanner -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Dayjs -->
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1/locale/id.js"></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="/css/custom.css">
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- ============================================================== -->
+  <!-- 1. LOGIN VIEW (Visible when unauthenticated) -->
+  <!-- ============================================================== -->
+  <div id="view-login" class="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
+      <div id="loginLogoContainer" class="w-16 h-16 mx-auto rounded-2xl bg-white/10 p-2 flex items-center justify-center border border-white/20 shadow-xl mb-4">
+        <i data-lucide="scan-line" class="w-10 h-10 text-indigo-400"></i>
+      </div>
+      <h2 id="loginCompanyName" class="text-3xl font-extrabold text-white tracking-tight">PT Nusantara Solusi Digital</h2>
+      <p class="mt-2 text-sm text-indigo-200">Sistem Presensi & Manajemen Kehadiran Karyawan</p>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4">
+      <div class="bg-white py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-100">
+        <form id="formLogin" class="space-y-5">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700">Email atau NIP</label>
+            <div class="mt-1 relative rounded-lg shadow-sm">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="user" class="w-5 h-5"></i>
+              </div>
+              <input type="text" id="loginEmail" required placeholder="admin@perusahaan.com atau ADM001"
+                class="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-slate-700">Password</label>
+            <div class="mt-1 relative rounded-lg shadow-sm">
+              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <i data-lucide="lock" class="w-5 h-5"></i>
+              </div>
+              <input type="password" id="loginPassword" required placeholder="••••••••"
+                class="block w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-sm">
+              <button type="button" onclick="togglePasswordVisibility('loginPassword')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>Sesi tersimpan otomatis selama 7 hari</span>
+            <a href="/qr-display" target="_blank" class="text-brand-600 font-medium hover:underline flex items-center space-x-1">
+              <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+              <span>Layar QR Kantor</span>
+            </a>
+          </div>
+
+          <button type="submit" id="btnLoginSubmit"
+            class="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-semibold text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition duration-150">
+            <i data-lucide="log-in" class="w-4 h-4 mr-2"></i>
+            <span>Masuk ke Akun</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- 2. MAIN APPLICATION SHELL (Visible when authenticated) -->
+  <!-- ============================================================== -->
+  <div id="app-shell" class="hidden min-h-screen flex flex-col bg-slate-100">
+    
+    <!-- TOP NAVBAR -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm no-print">
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          
+          <!-- Left: Hamburger (Mobile) & Logo -->
+          <div class="flex items-center space-x-3">
+            <button id="btnToggleSidebar" class="p-2 rounded-lg text-slate-500 hover:bg-slate-100 lg:hidden focus:outline-none">
+              <i data-lucide="menu" class="w-6 h-6"></i>
+            </button>
+            <div class="flex items-center space-x-3">
+              <div id="headerLogo" class="w-9 h-9 rounded-lg bg-brand-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                <i data-lucide="scan-line" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h1 id="headerCompanyName" class="font-bold text-slate-900 leading-tight text-base sm:text-lg">PT Nusantara Solusi Digital</h1>
+                <p class="text-xs text-slate-500 hidden sm:block">Aplikasi Absensi & Manajemen Karyawan</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Center: Live Clock (hidden on tiny screens) -->
+          <div class="hidden md:flex flex-col items-center">
+            <div id="headerLiveClock" class="text-base font-mono font-bold text-brand-700 bg-brand-50 px-3 py-0.5 rounded-full border border-brand-200">
+              00:00:00 WIB
+            </div>
+            <div id="headerLiveDate" class="text-[11px] text-slate-500 mt-0.5">
+              Senin, 19 Oktober 2026
+            </div>
+          </div>
+
+          <!-- Right: Action Buttons & User Menu -->
+          <div class="flex items-center space-x-2 sm:space-x-4">
+            <!-- QR Lobby Link -->
+            <a href="/qr-display" target="_blank" title="Buka Layar QR Kantor (Lobby Display)"
+              class="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition">
+              <i data-lucide="qr-code" class="w-4 h-4"></i>
+              <span>Layar QR Kantor</span>
+            </a>
+
+            <!-- User Dropdown Profile -->
+            <div class="relative">
+              <button id="btnUserMenu" class="flex items-center space-x-2 p-1.5 rounded-lg hover:bg-slate-100 focus:outline-none transition">
+                <img id="userAvatarImg" src="https://ui-avatars.com/api/?name=User&background=2563eb&color=fff"
+                  alt="Avatar" class="w-8 h-8 rounded-full object-cover border border-slate-200">
+                <div class="text-left hidden sm:block">
+                  <div id="userNameDisplay" class="text-xs font-semibold text-slate-800 leading-tight">Nama Pengguna</div>
+                  <div id="userRoleBadge" class="text-[10px] text-brand-600 font-medium uppercase">Admin</div>
+                </div>
+                <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400"></i>
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div id="userDropdown" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 z-50">
+                <div class="px-4 py-2 border-b border-slate-100">
+                  <p id="dropdownNip" class="text-[10px] text-slate-400 font-mono">NIP: EMP001</p>
+                  <p id="dropdownEmail" class="text-xs text-slate-600 truncate">email@perusahaan.com</p>
+                </div>
+                <button onclick="openProfileModal()" class="w-full text-left px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center space-x-2">
+                  <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                  <span>Profil & Ganti Password</span>
+                </button>
+                <button onclick="handleLogout()" class="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center space-x-2 border-t border-slate-100">
+                  <i data-lucide="log-out" class="w-4 h-4 text-red-500"></i>
+                  <span>Keluar (Logout)</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- BODY CONTAINER WITH SIDEBAR -->
+    <div class="flex-1 flex overflow-hidden">
+      
+      <!-- SIDEBAR -->
+      <aside id="sidebar" class="fixed inset-y-0 left-0 z-20 w-64 bg-slate-900 text-slate-300 transform -translate-x-full lg:translate-x-0 lg:static lg:inset-auto transition-transform duration-200 ease-in-out flex flex-col justify-between shadow-xl lg:shadow-none no-print">
+        
+        <!-- Sidebar Navigation -->
+        <div class="p-4 space-y-6 overflow-y-auto max-h-[calc(100vh-4rem)]">
+          
+          <!-- Menu Group: Utama -->
+          <div>
+            <div class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Menu Utama</div>
+            <nav class="space-y-1">
+              <button onclick="switchView('dashboard')" id="nav-dashboard" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="layout-dashboard" class="w-4 h-4 mr-3"></i>
+                <span>Dashboard</span>
+              </button>
+              <button onclick="switchView('absensi')" id="nav-absensi" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="scan-line" class="w-4 h-4 mr-3"></i>
+                <span>Absensi Sekarang</span>
+              </button>
+              <button onclick="switchView('riwayat')" id="nav-riwayat" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="calendar" class="w-4 h-4 mr-3"></i>
+                <span>Riwayat Absensi</span>
+              </button>
+              <button onclick="switchView('cuti')" id="nav-cuti" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="calendar-off" class="w-4 h-4 mr-3"></i>
+                <span>Cuti & Izin / Sakit</span>
+              </button>
+              <button onclick="switchView('lembur')" id="nav-lembur" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="clock" class="w-4 h-4 mr-3"></i>
+                <span>Manajemen Lembur</span>
+              </button>
+            </nav>
+          </div>
+
+          <!-- Menu Group: Administrator Only -->
+          <div id="adminNavGroup" class="admin-only">
+            <div class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Administrasi</div>
+            <nav class="space-y-1">
+              <button onclick="switchView('karyawan')" id="nav-karyawan" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="users" class="w-4 h-4 mr-3"></i>
+                <span>Data Karyawan</span>
+              </button>
+              <button onclick="switchView('jabatan-shift')" id="nav-jabatan-shift" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="briefcase" class="w-4 h-4 mr-3"></i>
+                <span>Jabatan & Shift</span>
+              </button>
+              <button onclick="switchView('laporan')" id="nav-laporan" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-3"></i>
+                <span>Laporan & Rekap</span>
+              </button>
+              <button onclick="switchView('pengaturan')" id="nav-pengaturan" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="settings" class="w-4 h-4 mr-3"></i>
+                <span>Pengaturan Sistem</span>
+              </button>
+              <button onclick="switchView('backup')" id="nav-backup" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="database" class="w-4 h-4 mr-3"></i>
+                <span>Backup & Restore</span>
+              </button>
+              <button onclick="switchView('notifikasi')" id="nav-notifikasi" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="bell-ring" class="w-4 h-4 mr-3"></i>
+                <span>Notifikasi & Bot</span>
+              </button>
+              <button onclick="switchView('logs')" id="nav-logs" class="sidebar-btn flex items-center w-full px-3 py-2.5 rounded-xl text-sm font-medium transition">
+                <i data-lucide="activity" class="w-4 h-4 mr-3"></i>
+                <span>Log Aktivitas</span>
+              </button>
+            </nav>
+          </div>
+
+        </div>
+
+        <!-- Sidebar Footer Status -->
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>Server Online</span>
+          </div>
+          <span class="text-[10px] text-slate-500">v2.0 Pro</span>
+        </div>
+      </aside>
+
+      <!-- Sidebar Backdrop on Mobile -->
+      <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-900/50 z-10 hidden lg:hidden"></div>
+
+      <!-- MAIN CONTENT VIEWPORT -->
+      <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ============================================================== -->
+        <!-- VIEW: DASHBOARD -->
+        <!-- ============================================================== -->
+        <div id="view-dashboard" class="view-panel space-y-6">
+          
+          <!-- Welcome Banner -->
+          <div class="bg-gradient-to-r from-brand-600 via-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
+            <div class="relative z-10">
+              <h2 class="text-2xl font-bold">Selamat Datang, <span id="dashWelcomeName">Nama</span>! 👋</h2>
+              <p class="text-indigo-100 text-sm mt-1 max-w-xl">
+                Aplikasi Absensi Karyawan terintegrasi QR Code Scanner, Validasi GPS Geofencing, Shift Kerja, dan Manajemen Lembur.
+              </p>
+              <div class="mt-4 flex flex-wrap gap-3">
+                <button onclick="switchView('absensi')" class="px-4 py-2 bg-white text-brand-700 font-semibold rounded-lg text-sm hover:bg-slate-50 shadow transition flex items-center space-x-1.5">
+                  <i data-lucide="scan-line" class="w-4 h-4"></i>
+                  <span>Lakukan Absensi Sekarang</span>
+                </button>
+                <button onclick="switchView('cuti')" class="px-4 py-2 bg-brand-500/30 text-white font-medium rounded-lg text-sm hover:bg-brand-500/50 border border-white/20 transition flex items-center space-x-1.5">
+                  <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+                  <span>Ajukan Cuti/Izin</span>
+                </button>
+              </div>
+            </div>
+            <!-- Decorative circle -->
+            <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+          </div>
+
+          <!-- Today's Personal Status Card (Employee Focus) -->
+          <div id="dashTodayCard" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-4">
+              <div id="dashTodayStatusIcon" class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                <i data-lucide="clock" class="w-6 h-6"></i>
+              </div>
+              <div>
+                <p class="text-xs text-slate-500 font-medium uppercase tracking-wider">Status Absensi Anda Hari Ini</p>
+                <h3 id="dashTodayStatusText" class="text-lg font-bold text-slate-900">Belum Melakukan Absensi Masuk</h3>
+                <p id="dashTodayTimeDetail" class="text-xs text-slate-500">Jadwal Shift: 08:00 - 17:00 (Toleransi: 15 mnt)</p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-3 w-full md:w-auto">
+              <button onclick="switchView('absensi')" class="w-full md:w-auto px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-sm shadow transition flex items-center justify-center space-x-2">
+                <i data-lucide="qr-code" class="w-4 h-4"></i>
+                <span id="dashTodayBtnText">Absen Masuk Sekarang</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Metric Cards (Admin & Summary) -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Hadir Tepat Waktu</span>
+                <span class="p-2 rounded-lg bg-emerald-50 text-emerald-600"><i data-lucide="check-circle" class="w-4 h-4"></i></span>
+              </div>
+              <div id="metricTepatWaktu" class="text-2xl font-bold text-slate-900 mt-2">0</div>
+              <span class="text-[11px] text-emerald-600 font-medium">Bulan Ini</span>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Terlambat</span>
+                <span class="p-2 rounded-lg bg-amber-50 text-amber-600"><i data-lucide="alert-triangle" class="w-4 h-4"></i></span>
+              </div>
+              <div id="metricTerlambat" class="text-2xl font-bold text-slate-900 mt-2">0</div>
+              <span class="text-[11px] text-amber-600 font-medium">Bulan Ini</span>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Izin & Sakit</span>
+                <span class="p-2 rounded-lg bg-sky-50 text-sky-600"><i data-lucide="file-text" class="w-4 h-4"></i></span>
+              </div>
+              <div id="metricIzinSakit" class="text-2xl font-bold text-slate-900 mt-2">0</div>
+              <span class="text-[11px] text-sky-600 font-medium">Bulan Ini</span>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-500 uppercase">Total Karyawan</span>
+                <span class="p-2 rounded-lg bg-indigo-50 text-indigo-600"><i data-lucide="users" class="w-4 h-4"></i></span>
+              </div>
+              <div id="metricTotalKaryawan" class="text-2xl font-bold text-slate-900 mt-2">0</div>
+              <span class="text-[11px] text-indigo-600 font-medium">Karyawan Terdaftar</span>
+            </div>
+          </div>
+
+          <!-- Charts Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Doughnut Attendance Ratio -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+              <h3 class="text-sm font-bold text-slate-800 self-start mb-4">Distribusi Status Kehadiran</h3>
+              <div class="w-56 h-56 relative">
+                <canvas id="chartAttendanceDoughnut"></canvas>
+              </div>
+              <div class="grid grid-cols-3 gap-2 w-full mt-4 text-[11px] text-center text-slate-600">
+                <div class="p-1.5 rounded bg-emerald-50 text-emerald-700 font-medium">Tepat Waktu</div>
+                <div class="p-1.5 rounded bg-amber-50 text-amber-700 font-medium">Terlambat</div>
+                <div class="p-1.5 rounded bg-sky-50 text-sky-700 font-medium">Izin/Sakit/Cuti</div>
+              </div>
+            </div>
+
+            <!-- Bar Chart / Trend -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-slate-800">Tren Kehadiran Harian Terakhir</h3>
+                <span class="text-xs text-slate-500">7 Hari Kerja Terakhir</span>
+              </div>
+              <div class="h-64">
+                <canvas id="chartAttendanceTrend"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity / Logs Preview -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-bold text-slate-800 flex items-center">
+                <i data-lucide="history" class="w-4 h-4 mr-2 text-slate-500"></i>
+                <span>Aktivitas Presensi Terkini</span>
+              </h3>
+              <button onclick="switchView('riwayat')" class="text-xs font-semibold text-brand-600 hover:text-brand-700">Lihat Semua →</button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500">
+                    <th class="py-2.5 px-3">Tanggal</th>
+                    <th class="py-2.5 px-3">Karyawan</th>
+                    <th class="py-2.5 px-3">Masuk</th>
+                    <th class="py-2.5 px-3">Pulang</th>
+                    <th class="py-2.5 px-3">Status</th>
+                    <th class="py-2.5 px-3">Jarak GPS</th>
+                  </tr>
+                </thead>
+                <tbody id="dashRecentTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat data aktivitas...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: ABSENSI (Scan QR & GPS Validation) -->
+        <!-- ============================================================== -->
+        <div id="view-absensi" class="view-panel hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Form Absensi Masuk & Pulang</h2>
+              <p class="text-xs text-slate-500">Pindai QR Code resmi dan pastikan koordinat GPS Anda berada dalam radius kantor.</p>
+            </div>
+            <a href="/qr-display" target="_blank" class="inline-flex items-center space-x-1.5 px-3 py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-xl text-xs font-medium hover:bg-indigo-100 transition self-start md:self-auto">
+              <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              <span>Buka QR Kantor di Tab Baru</span>
+            </a>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left Column: Camera Scanner & QR Input (7 Cols) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+              
+              <!-- Tab Action: Check-In or Check-Out -->
+              <div class="flex p-1 bg-slate-100 rounded-xl text-sm font-semibold">
+                <button id="btnTabCheckIn" onclick="setAttendanceAction('in')"
+                  class="flex-1 py-2 rounded-lg bg-white text-brand-700 shadow-sm transition flex items-center justify-center space-x-2">
+                  <i data-lucide="log-in" class="w-4 h-4"></i>
+                  <span>Absensi Masuk</span>
+                </button>
+                <button id="btnTabCheckOut" onclick="setAttendanceAction('out')"
+                  class="flex-1 py-2 rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center justify-center space-x-2">
+                  <i data-lucide="log-out" class="w-4 h-4"></i>
+                  <span>Absensi Pulang</span>
+                </button>
+              </div>
+
+              <!-- Camera Header & HD Quality Controls -->
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-1 pb-1">
+                <div class="flex items-center space-x-2">
+                  <span class="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200 shadow-sm">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-indigo-500"></i>
+                    <span>Resolusi Kamera HD (1080p)</span>
+                  </span>
+                  <span id="cameraStatusIndicator" class="hidden inline-flex items-center space-x-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                    <span>HD Live</span>
+                  </span>
+                </div>
+                <div id="cameraDeviceContainer" class="hidden">
+                  <select id="selectCameraDevice" onchange="onCameraDeviceSelected(this.value)"
+                    class="text-xs px-2.5 py-1.5 border border-slate-300 rounded-xl bg-white font-medium text-slate-700 focus:ring-2 focus:ring-brand-500 shadow-sm">
+                  </select>
+                </div>
+              </div>
+
+              <!-- Interactive Camera Box -->
+              <div class="border-2 border-dashed border-slate-300 rounded-2xl p-4 bg-slate-50 flex flex-col items-center justify-center relative overflow-hidden">
+                <div id="qr-reader" class="w-full max-w-md rounded-xl overflow-hidden shadow-sm"></div>
+                
+                <div id="scannerControls" class="mt-4 flex flex-wrap gap-2 justify-center">
+                  <button id="btnStartScanner" onclick="startQrScanner()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5">
+                    <i data-lucide="camera" class="w-4 h-4"></i>
+                    <span>Nyalakan Kamera Scanner HD</span>
+                  </button>
+                  <button id="btnStopScanner" onclick="stopQrScanner()" class="hidden px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5">
+                    <i data-lucide="camera-off" class="w-4 h-4"></i>
+                    <span>Matikan Kamera</span>
+                  </button>
+                </div>
+
+                <div class="text-[11px] text-slate-500 mt-2 text-center">
+                  Arahkan kamera ke layar QR kantor. Scanner HD otomatis memindai dengan resolusi tajam.
+                </div>
+              </div>
+
+              <!-- QR Token & Notes Input -->
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Token / Hasil Scan QR Code</label>
+                  <div class="mt-1 flex space-x-2">
+                    <input type="text" id="inputQrToken" placeholder="Hasil scan QR otomatis terisi di sini..."
+                      class="flex-1 px-3 py-2 border border-slate-300 rounded-xl text-sm font-mono focus:ring-2 focus:ring-brand-500 focus:border-brand-500">
+                    <button type="button" onclick="pasteOfficeQrToken()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold border border-slate-300 transition">
+                      Gunakan Token Kantor
+                    </button>
+                  </div>
+                </div>
+
+                <div id="inputNotesContainer">
+                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Catatan Tambahan (Opsional)</label>
+                  <input type="text" id="inputAttendanceNotes" placeholder="Contoh: Kunjungan klien / tugas lapangan..."
+                    class="mt-1 block w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-brand-500">
+                </div>
+
+                <!-- Submit Attendance Button -->
+                <button type="button" id="btnSubmitAttendance" onclick="submitAttendance()"
+                  class="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition flex items-center justify-center space-x-2">
+                  <i data-lucide="check-circle" class="w-5 h-5"></i>
+                  <span id="btnSubmitAttendanceText">Kirim Absensi Masuk</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Right Column: GPS Geolocation & Radius Validation (5 Cols) -->
+            <div class="lg:col-span-5 space-y-4">
+              
+              <!-- GPS Geofence Card -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-sm font-bold text-slate-800 flex items-center">
+                    <i data-lucide="map-pin" class="w-4 h-4 mr-1.5 text-brand-600"></i>
+                    <span>Validasi Radius GPS</span>
+                  </h3>
+                  <button onclick="detectUserLocation()" class="p-1.5 rounded-lg text-brand-600 hover:bg-brand-50 border border-brand-200 text-xs font-medium flex items-center space-x-1" title="Perbarui Lokasi">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                    <span>Deteksi GPS</span>
+                  </button>
+                </div>
+
+                <!-- Select Office Location -->
+                <div>
+                  <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span>Titik Kantor Tujuan Absensi:</span>
+                    <span id="activeOfficeBadge" class="text-[10px] text-brand-600 font-semibold bg-brand-50 px-2 py-0.5 rounded-full border border-brand-200">Otomatis</span>
+                  </label>
+                  <select id="selectAttendanceOffice" onchange="onAttendanceOfficeChange(this.value)"
+                    class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold bg-white text-slate-800 focus:ring-2 focus:ring-brand-500">
+                    <option value="auto">📍 Otomatis Deteksi Kantor Terdekat</option>
+                  </select>
+                </div>
+
+                <!-- GPS Status Banner -->
+                <div id="gpsStatusBanner" class="p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs flex items-center space-x-3">
+                  <div id="gpsStatusIcon" class="w-8 h-8 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="navigation" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <p id="gpsStatusTitle" class="font-bold text-slate-800">Menunggu Deteksi Lokasi</p>
+                    <p id="gpsStatusDesc" class="text-slate-500 text-[11px]">Klik 'Deteksi GPS' atau pilih opsi pengujian.</p>
+                  </div>
+                </div>
+
+                <!-- Live Distance Metric -->
+                <div class="grid grid-cols-2 gap-2 text-center text-xs">
+                  <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span class="text-slate-500 text-[10px] uppercase font-semibold">Jarak dari Kantor</span>
+                    <p id="metricGpsDistance" class="text-lg font-bold text-slate-900 mt-0.5">- m</p>
+                  </div>
+                  <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                    <span class="text-slate-500 text-[10px] uppercase font-semibold">Batas Radius Kantor</span>
+                    <p id="metricOfficeRadius" class="text-lg font-bold text-brand-600 mt-0.5">100 m</p>
+                  </div>
+                </div>
+
+                <!-- Interactive Leaflet Map for User & Office Radius -->
+                <div id="attendanceMap" class="w-full h-64 rounded-xl border border-slate-200 z-0"></div>
+              </div>
+
+              <!-- Shift Details Box -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm text-xs space-y-2">
+                <div class="font-bold text-slate-800 flex items-center justify-between">
+                  <span>Jadwal Shift Kerja Anda</span>
+                  <span id="shiftBadgeName" class="px-2 py-0.5 rounded-full bg-brand-50 text-brand-700 font-semibold border border-brand-200">Shift Reguler</span>
+                </div>
+                <div class="flex justify-between text-slate-600 pt-1">
+                  <span>Jam Masuk: <b id="shiftStartTime">08:00</b></span>
+                  <span>Jam Pulang: <b id="shiftEndTime">17:00</b></span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                  <span>Toleransi Keterlambatan:</span>
+                  <span class="font-semibold text-amber-600"><span id="shiftToleranceMinutes">15</span> Menit</span>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: RIWAYAT ABSENSI -->
+        <!-- ============================================================== -->
+        <div id="view-riwayat" class="view-panel hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Riwayat Absensi</h2>
+              <p class="text-xs text-slate-500">Daftar rekap kehadiran, jam masuk/pulang, dan catatan presensi.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="loadAttendanceHistory()" class="px-3 py-2 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-50 shadow-sm transition flex items-center space-x-1">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                <span>Perbarui Data</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Bar -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center gap-3 text-xs">
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Bulan:</span>
+              <select id="filterHistoryMonth" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white">
+                <option value="1">Januari</option>
+                <option value="2">Februari</option>
+                <option value="3">Maret</option>
+                <option value="4">April</option>
+                <option value="5">Mei</option>
+                <option value="6">Juni</option>
+                <option value="7">Juli</option>
+                <option value="8">Agustus</option>
+                <option value="9">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Tahun:</span>
+              <select id="filterHistoryYear" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white">
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+              </select>
+            </div>
+
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Status:</span>
+              <select id="filterHistoryStatus" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white">
+                <option value="">Semua Status</option>
+                <option value="Tepat Waktu">Tepat Waktu</option>
+                <option value="Terlambat">Terlambat</option>
+                <option value="Izin">Izin</option>
+                <option value="Sakit">Sakit</option>
+                <option value="Cuti">Cuti</option>
+                <option value="Alpha">Alpha</option>
+              </select>
+            </div>
+
+            <!-- Admin filter for employee selection -->
+            <div id="filterHistoryEmployeeContainer" class="admin-only hidden flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Karyawan:</span>
+              <select id="filterHistoryEmployee" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white max-w-[160px]">
+                <option value="">Semua Karyawan</option>
+              </select>
+            </div>
+
+            <button onclick="loadAttendanceHistory()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-semibold transition ml-auto">
+              Terapkan Filter
+            </button>
+          </div>
+
+          <!-- History Summary Counters -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center text-xs">
+            <div class="p-3 rounded-xl bg-white border border-slate-200">
+              <span class="text-slate-400 font-medium">Total Absensi</span>
+              <p id="sumHistoryTotal" class="text-xl font-bold text-slate-900 mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+              <span class="font-medium">Tepat Waktu</span>
+              <p id="sumHistoryTepat" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+              <span class="font-medium">Terlambat</span>
+              <p id="sumHistoryTerlambat" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800">
+              <span class="font-medium">Izin</span>
+              <p id="sumHistoryIzin" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-800">
+              <span class="font-medium">Sakit</span>
+              <p id="sumHistorySakit" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800">
+              <span class="font-medium">Cuti</span>
+              <p id="sumHistoryCuti" class="text-xl font-bold mt-1">0</p>
+            </div>
+          </div>
+
+          <!-- History Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th class="py-3 px-4">Tanggal</th>
+                    <th class="py-3 px-4">Karyawan</th>
+                    <th class="py-3 px-4">Jam Masuk</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Jarak GPS</th>
+                    <th class="py-3 px-4">Jam Pulang</th>
+                    <th class="py-3 px-4">Durasi Kerja</th>
+                    <th class="py-3 px-4">Catatan</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="8" class="text-center py-6 text-slate-400">Memuat riwayat absensi...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: DATA KARYAWAN (Admin only) -->
+        <!-- ============================================================== -->
+        <div id="view-karyawan" class="view-panel hidden space-y-6 admin-only">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Manajemen Data Karyawan</h2>
+              <p class="text-xs text-slate-500">Kelola informasi data personal, jabatan, shift kerja, dan status akun.</p>
+            </div>
+            <button onclick="openEmployeeModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5 self-start md:self-auto">
+              <i data-lucide="user-plus" class="w-4 h-4"></i>
+              <span>Tambah Karyawan Baru</span>
+            </button>
+          </div>
+
+          <!-- Filter & Search -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center gap-3 text-xs">
+            <div class="flex-1 min-w-[200px] relative">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+              <input type="text" id="searchEmployeeInput" onkeyup="filterEmployeeList()" placeholder="Cari nama, NIP, atau email..."
+                class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-xl">
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Departemen:</span>
+              <select id="filterEmployeeDept" onchange="filterEmployeeList()" class="px-2.5 py-2 border border-slate-300 rounded-xl bg-white">
+                <option value="">Semua Departemen</option>
+              </select>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Status:</span>
+              <select id="filterEmployeeStatus" onchange="filterEmployeeList()" class="px-2.5 py-2 border border-slate-300 rounded-xl bg-white">
+                <option value="">Semua Status</option>
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Nonaktif</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Employee Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th class="py-3 px-4">Karyawan</th>
+                    <th class="py-3 px-4">NIP</th>
+                    <th class="py-3 px-4">Kontak</th>
+                    <th class="py-3 px-4">Departemen / Jabatan</th>
+                    <th class="py-3 px-4">Shift Ditugaskan</th>
+                    <th class="py-3 px-4">Role</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="employeeTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="8" class="text-center py-6 text-slate-400">Memuat data karyawan...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: JABATAN & SHIFT (Admin only) -->
+        <!-- ============================================================== -->
+        <div id="view-jabatan-shift" class="view-panel hidden space-y-6 admin-only">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Pengelolaan Jabatan & Shift Kerja</h2>
+              <p class="text-xs text-slate-500">Konfigurasi struktur departemen/jabatan serta shift kerja dan toleransi keterlambatan.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Departemen / Jabatan Box -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                  <i data-lucide="briefcase" class="w-4 h-4 mr-2 text-brand-600"></i>
+                  <span>Master Jabatan / Departemen</span>
+                </h3>
+                <button onclick="openDepartmentModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Tambah Jabatan</span>
+                </button>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-3">Nama Jabatan</th>
+                      <th class="py-2.5 px-3">Deskripsi</th>
+                      <th class="py-2.5 px-3">Total Karyawan</th>
+                      <th class="py-2.5 px-3 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="deptTableBody" class="divide-y divide-slate-100">
+                    <tr><td colspan="4" class="text-center py-4 text-slate-400">Memuat data jabatan...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Shifts Box -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                  <i data-lucide="clock" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                  <span>Master Shift Kerja & Jam</span>
+                </h3>
+                <button onclick="openShiftModal()" class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Tambah Shift</span>
+                </button>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                    <tr>
+                      <th class="py-2.5 px-3">Nama Shift</th>
+                      <th class="py-2.5 px-3">Jam Kerja</th>
+                      <th class="py-2.5 px-3">Toleransi</th>
+                      <th class="py-2.5 px-3">Karyawan</th>
+                      <th class="py-2.5 px-3 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="shiftTableBody" class="divide-y divide-slate-100">
+                    <tr><td colspan="5" class="text-center py-4 text-slate-400">Memuat data shift...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: CUTI & IZIN / SAKIT -->
+        <!-- ============================================================== -->
+        <div id="view-cuti" class="view-panel hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Pengajuan Cuti, Izin & Sakit</h2>
+              <p class="text-xs text-slate-500">Ajukan permohonan ketidakhadiran kerja dengan bukti pendukung.</p>
+            </div>
+            <button onclick="openLeaveModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5 self-start md:self-auto">
+              <i data-lucide="calendar-plus" class="w-4 h-4"></i>
+              <span>Ajukan Permohonan Baru</span>
+            </button>
+          </div>
+
+          <!-- Filter status -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex items-center space-x-3 text-xs">
+            <span class="font-semibold text-slate-600">Filter Status:</span>
+            <select id="filterLeaveStatus" onchange="loadLeavesList()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white">
+              <option value="">Semua Status</option>
+              <option value="menunggu">Menunggu Persetujuan</option>
+              <option value="disetujui">Disetujui</option>
+              <option value="ditolak">Ditolak</option>
+            </select>
+            <select id="filterLeaveType" onchange="loadLeavesList()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white">
+              <option value="">Semua Jenis</option>
+              <option value="cuti">Cuti Tahunan</option>
+              <option value="izin">Izin Keperluan</option>
+              <option value="sakit">Sakit</option>
+            </select>
+          </div>
+
+          <!-- Leaves Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th class="py-3 px-4">Karyawan</th>
+                    <th class="py-3 px-4">Jenis</th>
+                    <th class="py-3 px-4">Periode Tanggal</th>
+                    <th class="py-3 px-4">Durasi</th>
+                    <th class="py-3 px-4">Alasan</th>
+                    <th class="py-3 px-4">Dokumen</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="leavesTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="8" class="text-center py-6 text-slate-400">Memuat data permohonan...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: MANAJEMEN LEMBUR -->
+        <!-- ============================================================== -->
+        <div id="view-lembur" class="view-panel hidden space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Manajemen Lembur (Overtime)</h2>
+              <p class="text-xs text-slate-500">Pengajuan lembur karyawan, kalkulasi jam kerja lembur, dan persetujuan manajemen.</p>
+            </div>
+            <button onclick="openOvertimeModal()" class="px-4 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5 self-start md:self-auto">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i>
+              <span>Ajukan Jam Lembur</span>
+            </button>
+          </div>
+
+          <!-- Total Approved Overtime Hours Highlight -->
+          <div class="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-sm flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium text-amber-100 uppercase tracking-wider">Total Jam Lembur Disetujui (Bulan Ini)</p>
+              <h3 id="dashTotalOvertimeHours" class="text-3xl font-extrabold mt-1">0 Jam</h3>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
+              <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+            </div>
+          </div>
+
+          <!-- Overtime Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th class="py-3 px-4">Karyawan</th>
+                    <th class="py-3 px-4">Tanggal Lembur</th>
+                    <th class="py-3 px-4">Jam Lembur</th>
+                    <th class="py-3 px-4">Durasi Jam</th>
+                    <th class="py-3 px-4">Uraian Tugas Lembur</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Catatan Review</th>
+                    <th class="py-3 px-4 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="overtimeTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="8" class="text-center py-6 text-slate-400">Memuat data lembur...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: LAPORAN & REKAP (Admin only) -->
+        <!-- ============================================================== -->
+        <div id="view-laporan" class="view-panel hidden space-y-6 admin-only">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Laporan Rekapitulasi Absensi</h2>
+              <p class="text-xs text-slate-500">Ekspor rekap kehadiran harian dan bulanan ke format Excel, CSV, atau Cetak Resmi.</p>
+            </div>
+            <div class="flex items-center space-x-2">
+              <button onclick="exportReport('excel')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+                <span>Download Excel (.xlsx)</span>
+              </button>
+              <button onclick="exportReport('csv')" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Download CSV</span>
+              </button>
+              <button onclick="window.print()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+                <span>Cetak / PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Printable Letterhead (visible only on print) -->
+          <div class="print-only text-center border-b-2 border-slate-900 pb-4 mb-4">
+            <h1 id="printCompanyName" class="text-2xl font-bold tracking-tight">PT NUSANTARA SOLUSI DIGITAL</h1>
+            <p id="printCompanyAddress" class="text-xs">Jl. Jend. Sudirman Kav. 52-53, SCBD, Jakarta Selatan</p>
+            <p id="printCompanyContact" class="text-xs">Telp: (021) 555-0199 • Email: hrd@nusantara-solusi.id</p>
+            <h2 class="text-base font-bold mt-4 underline uppercase">LAPORAN REKAPITULASI PRESENSI KARYAWAN</h2>
+          </div>
+
+          <!-- Filter Box -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center gap-3 text-xs no-print">
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Dari Tanggal:</span>
+              <input type="date" id="filterReportStartDate" class="px-2.5 py-1.5 border border-slate-300 rounded-lg">
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Sampai:</span>
+              <input type="date" id="filterReportEndDate" class="px-2.5 py-1.5 border border-slate-300 rounded-lg">
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Departemen:</span>
+              <select id="filterReportDept" class="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-white">
+                <option value="">Semua Departemen</option>
+              </select>
+            </div>
+            <button onclick="loadReportData()" class="px-4 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-semibold transition ml-auto">
+              Tampilkan Laporan
+            </button>
+          </div>
+
+          <!-- Report Summary Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 text-center text-xs">
+            <div class="p-3 rounded-xl bg-white border border-slate-200">
+              <span class="text-slate-400 font-medium">Total Record</span>
+              <p id="sumReportTotal" class="text-xl font-bold text-slate-900 mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800">
+              <span class="font-medium">Tepat Waktu</span>
+              <p id="sumReportTepat" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800">
+              <span class="font-medium">Terlambat</span>
+              <p id="sumReportTerlambat" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-sky-50 border border-sky-200 text-sky-800">
+              <span class="font-medium">Izin</span>
+              <p id="sumReportIzin" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-purple-50 border border-purple-200 text-purple-800">
+              <span class="font-medium">Sakit</span>
+              <p id="sumReportSakit" class="text-xl font-bold mt-1">0</p>
+            </div>
+            <div class="p-3 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-800">
+              <span class="font-medium">Cuti</span>
+              <p id="sumReportCuti" class="text-xl font-bold mt-1">0</p>
+            </div>
+          </div>
+
+          <!-- Report Data Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th class="py-3 px-4">No</th>
+                    <th class="py-3 px-4">Tanggal</th>
+                    <th class="py-3 px-4">NIP</th>
+                    <th class="py-3 px-4">Nama Karyawan</th>
+                    <th class="py-3 px-4">Departemen</th>
+                    <th class="py-3 px-4">Shift</th>
+                    <th class="py-3 px-4">Lokasi Kantor</th>
+                    <th class="py-3 px-4">Masuk</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Jarak (m)</th>
+                    <th class="py-3 px-4">Pulang</th>
+                    <th class="py-3 px-4">Durasi</th>
+                  </tr>
+                </thead>
+                <tbody id="reportTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="12" class="text-center py-6 text-slate-400">Pilih filter dan klik 'Tampilkan Laporan'</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Signature Block for Print Mode -->
+          <div class="print-only mt-10 print-break-inside-avoid">
+            <div class="flex justify-between text-xs px-10">
+              <div class="text-center">
+                <p>Mengetahui,</p>
+                <p class="font-bold">Direktur Utama</p>
+                <div class="h-20"></div>
+                <p class="font-bold underline">( ............................................ )</p>
+              </div>
+              <div class="text-center">
+                <p id="printPlaceDate">Jakarta, 19 Oktober 2026</p>
+                <p class="font-bold">Manajer HRD</p>
+                <div class="h-20"></div>
+                <p class="font-bold underline">( ............................................ )</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: PENGATURAN SISTEM (Admin only) -->
+        <!-- ============================================================== -->
+        <div id="view-pengaturan" class="view-panel hidden space-y-6 admin-only">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Pengaturan Sistem & Lokasi Kantor</h2>
+              <p class="text-xs text-slate-500">Konfigurasi koordinat geofencing GPS, batas radius, QR Code global, dan branding perusahaan.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Left: Company Info & Logo (5 Cols) -->
+            <div class="lg:col-span-5 space-y-6">
+              
+              <!-- Company Profile Card -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                  <i data-lucide="building" class="w-4 h-4 mr-2 text-brand-600"></i>
+                  <span>Profil & Logo Perusahaan</span>
+                </h3>
+
+                <form id="formSettingsCompany" onsubmit="saveCompanySettings(event)" class="space-y-4 text-xs">
+                  <div>
+                    <label class="block font-semibold text-slate-700">Nama Perusahaan</label>
+                    <input type="text" id="setCompanyName" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-700">Alamat Kantor</label>
+                    <textarea id="setCompanyAddress" rows="2" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="block font-semibold text-slate-700">No. Telepon</label>
+                      <input type="text" id="setCompanyPhone" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+                    </div>
+                    <div>
+                      <label class="block font-semibold text-slate-700">Email Perusahaan</label>
+                      <input type="email" id="setCompanyEmail" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+                    </div>
+                  </div>
+                  <button type="submit" class="w-full py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow transition">
+                    Simpan Profil Perusahaan
+                  </button>
+                </form>
+
+                <!-- Logo Upload -->
+                <div class="pt-4 border-t border-slate-100">
+                  <label class="block font-semibold text-slate-700 text-xs mb-2">Upload Logo Perusahaan</label>
+                  <div class="flex items-center space-x-4">
+                    <div id="settingsLogoPreview" class="w-14 h-14 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden">
+                      <i data-lucide="image" class="w-6 h-6 text-slate-400"></i>
+                    </div>
+                    <div class="flex-1">
+                      <input type="file" id="inputCompanyLogo" accept="image/*" class="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
+                      <button onclick="uploadCompanyLogo()" class="mt-2 px-3 py-1 bg-slate-800 text-white rounded-lg text-xs font-medium hover:bg-slate-700 transition">
+                        Unggah Logo
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Global QR Code Manager -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-base font-bold text-slate-900 flex items-center">
+                    <i data-lucide="qr-code" class="w-4 h-4 mr-2 text-indigo-600"></i>
+                    <span>QR Code Absensi Global</span>
+                  </h3>
+                  <button onclick="regenerateQrCode()" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 rounded-lg text-xs font-semibold transition flex items-center space-x-1" title="Buat Token Baru">
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <span>Regenerate</span>
+                  </button>
+                </div>
+
+                <div class="flex flex-col items-center p-4 bg-slate-50 rounded-xl border border-slate-200">
+                  <img id="settingsQrImage" src="" alt="Office QR" class="w-44 h-44 object-contain rounded-lg border border-slate-200 shadow-sm bg-white p-2">
+                  <p id="settingsQrTokenText" class="mt-2 font-mono text-xs font-bold text-slate-700 bg-white px-3 py-1 rounded-full border border-slate-200">
+                    TOKEN: ...
+                  </p>
+                </div>
+
+                <div class="flex gap-2">
+                  <a href="/qr-display" target="_blank" class="flex-1 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold text-center shadow transition flex items-center justify-center space-x-1.5">
+                    <i data-lucide="tv" class="w-4 h-4"></i>
+                    <span>Buka Layar Kiosk Kantor</span>
+                  </a>
+                  <button onclick="downloadQrCodeImage()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold border border-slate-200 transition" title="Download Gambar QR">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right: Multi-Office Coordinates & Interactive Leaflet Map (7 Cols) -->
+            <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <h3 class="text-base font-bold text-slate-900 flex items-center">
+                    <i data-lucide="map-pin" class="w-4 h-4 mr-2 text-emerald-600"></i>
+                    <span>Daftar Titik Lokasi Kantor & Geofencing Cabang</span>
+                  </h3>
+                  <p class="text-xs text-slate-500">Kelola beberapa kantor/cabang tempat karyawan dapat melakukan presensi kehadiran.</p>
+                </div>
+                <button type="button" onclick="openAddOfficeModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition flex items-center space-x-1 self-start sm:self-auto shrink-0">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Tambah Titik Kantor</span>
+                </button>
+              </div>
+
+              <!-- Office Locations Table -->
+              <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase">
+                    <tr>
+                      <th class="py-2.5 px-3">Nama Kantor</th>
+                      <th class="py-2.5 px-3">Koordinat (Lat, Lng)</th>
+                      <th class="py-2.5 px-3">Radius</th>
+                      <th class="py-2.5 px-3">Tipe</th>
+                      <th class="py-2.5 px-3 text-right">Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="officeTableBody" class="divide-y divide-slate-100">
+                    <tr><td colspan="5" class="text-center py-4 text-slate-400">Memuat daftar titik kantor...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Interactive Map Header -->
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-xs font-bold text-slate-700 flex items-center">
+                  <i data-lucide="map" class="w-3.5 h-3.5 mr-1 text-slate-500"></i>
+                  <span>Peta Interaktif Lokasi Kantor & Radius</span>
+                </span>
+                <span class="text-[11px] text-slate-500">
+                  Klik titik atau baris di tabel untuk fokus dan geser pin.
+                </span>
+              </div>
+
+              <!-- Interactive Map Picker -->
+              <div id="settingsMap" class="w-full h-80 rounded-2xl border border-slate-200 z-0"></div>
+
+              <!-- Active Office Coordinate Form -->
+              <form id="formSettingsLocation" onsubmit="saveActiveOfficeLocation(event)" class="space-y-3 text-xs pt-1 border-t border-slate-100">
+                <input type="hidden" id="activeOfficeId">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-slate-600">
+                    Mengatur Lokasi: <b id="activeEditingOfficeName" class="text-emerald-700">Kantor Pusat (SCBD Jakarta)</b>
+                  </span>
+                  <span id="activeEditingOfficeBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Utama</span>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                  <div>
+                    <label class="block font-semibold text-slate-700">Latitude</label>
+                    <input type="number" step="any" id="setOfficeLat" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-700">Longitude</label>
+                    <input type="number" step="any" id="setOfficeLng" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-slate-700">Radius (Meter)</label>
+                    <input type="number" id="setOfficeRadius" min="10" max="5000" required onchange="updateSettingsActiveCircle()" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-[11px]">
+                  <div class="flex items-center space-x-1.5">
+                    <i data-lucide="info" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Karyawan dapat memilih kantor ini saat absensi atau terdeteksi otomatis jika berada dalam radiusnya.</span>
+                  </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-1">
+                  <button type="button" onclick="detectCurrentLocationForOffice()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold border border-slate-300 transition flex items-center space-x-1.5">
+                    <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+                    <span>Gunakan Posisi Saya Sekarang</span>
+                  </button>
+                  <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow transition flex items-center space-x-1.5">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span>Simpan Perubahan Titik Kantor</span>
+                  </button>
+                </div>
+              </form>
+
+            </div>
+
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: BACKUP & RESTORE (Admin only) -->
+        <!-- ============================================================== -->
+        <div id="view-backup" class="view-panel hidden space-y-6 admin-only">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Backup & Restore Database</h2>
+              <p class="text-xs text-slate-500">Amankan data sistem dengan mencadangkan atau memulihkan database dari file SQL.</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Backup Card -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-4">
+                  <i data-lucide="download-cloud" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Unduh Backup Database (.SQL)</h3>
+                <p class="text-xs text-slate-500 mt-1">
+                  Mengekspor seluruh struktur tabel, data karyawan, riwayat absensi, shift, cuti, lembur, dan log ke dalam satu file standar SQL.
+                </p>
+              </div>
+
+              <div class="pt-4 border-t border-slate-100">
+                <a href="/api/backup/export" download class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl text-xs shadow transition flex items-center justify-center space-x-2">
+                  <i data-lucide="download" class="w-4 h-4"></i>
+                  <span>Download Backup SQL Sekarang</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Restore Card -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4">
+              <div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-4">
+                  <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-base font-bold text-slate-900">Restore Database dari File SQL</h3>
+                <p class="text-xs text-slate-500 mt-1">
+                  Memulihkan database dari cadangan file .sql sebelumnya. Semua tabel akan ditransaksikan secara aman.
+                </p>
+              </div>
+
+              <form id="formRestoreSql" onsubmit="handleRestoreDatabase(event)" class="pt-4 border-t border-slate-100 space-y-3">
+                <input type="file" id="inputRestoreSqlFile" accept=".sql" required class="block w-full text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100">
+                <button type="submit" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-xl text-xs shadow transition flex items-center justify-center space-x-2">
+                  <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                  <span>Jalankan Restore Database</span>
+                </button>
+              </form>
+            </div>
+
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: NOTIFIKASI & BOT (Admin only) -->
+        <!-- ============================================================== -->
+        <div id="view-notifikasi" class="view-panel hidden space-y-6 admin-only">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Integrasi Notifikasi & Log Pengiriman</h2>
+              <p class="text-xs text-slate-500">Konfigurasi pesan instan WhatsApp & Telegram Bot serta pantau riwayat notifikasi terkirim.</p>
+            </div>
+            <button onclick="openTestNotificationModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow transition flex items-center space-x-1.5 self-start md:self-auto">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>Kirim Notifikasi Uji Coba</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- WhatsApp Config Box -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                  <i data-lucide="message-circle" class="w-5 h-5 mr-2 text-emerald-600"></i>
+                  <span>WhatsApp Gateway</span>
+                </h3>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="setWaEnabled" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div>
+                  <label class="block font-semibold text-slate-700">API Endpoint URL</label>
+                  <input type="text" id="setWaApiUrl" placeholder="https://api.fonnte.com/send" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700">API Token / Secret Key</label>
+                  <input type="password" id="setWaApiToken" placeholder="Token API WhatsApp" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+                </div>
+                <button onclick="saveNotificationSettings()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold transition">
+                  Simpan Konfigurasi WA
+                </button>
+              </div>
+            </div>
+
+            <!-- Telegram Bot Config Box -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-slate-900 flex items-center">
+                  <i data-lucide="send" class="w-5 h-5 mr-2 text-sky-500"></i>
+                  <span>Telegram Bot Alert</span>
+                </h3>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="setTgEnabled" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                </label>
+              </div>
+
+              <div class="space-y-3 text-xs">
+                <div>
+                  <label class="block font-semibold text-slate-700">Bot Token</label>
+                  <input type="text" id="setTgBotToken" placeholder="123456:ABC-DEF1234ghIkl..." class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-700">Chat ID / Group ID Penerima</label>
+                  <input type="text" id="setTgChatId" placeholder="-100123456789" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+                </div>
+                <button onclick="saveNotificationSettings()" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-semibold transition">
+                  Simpan Konfigurasi Telegram
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Notification Transmission Logs Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-base font-bold text-slate-900">Riwayat Pengiriman Notifikasi</h3>
+              <button onclick="clearNotificationLogs()" class="text-xs text-red-600 hover:text-red-700 font-semibold">
+                Bersihkan Riwayat Log
+              </button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase font-semibold">
+                  <tr>
+                    <th class="py-2.5 px-3">Waktu</th>
+                    <th class="py-2.5 px-3">Channel</th>
+                    <th class="py-2.5 px-3">Penerima</th>
+                    <th class="py-2.5 px-3">Isi Pesan</th>
+                    <th class="py-2.5 px-3">Status</th>
+                    <th class="py-2.5 px-3">Respon Gateway</th>
+                  </tr>
+                </thead>
+                <tbody id="notificationLogsTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="6" class="text-center py-4 text-slate-400">Memuat log notifikasi...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- ============================================================== -->
+        <!-- VIEW: LOG AKTIVITAS (Admin only) -->
+        <!-- ============================================================== -->
+        <div id="view-logs" class="view-panel hidden space-y-6 admin-only">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold text-slate-900">Log Aktivitas & Audit Trail</h2>
+              <p class="text-xs text-slate-500">Rekam jejak setiap perubahan data penting, otentikasi pengguna, dan penyesuaian sistem.</p>
+            </div>
+            <button onclick="clearActivityLogs()" class="px-3.5 py-2 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 self-start md:self-auto">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <span>Bersihkan Semua Log</span>
+            </button>
+          </div>
+
+          <!-- Filter Log -->
+          <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm flex flex-wrap items-center gap-3 text-xs">
+            <div class="flex-1 min-w-[200px] relative">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-2.5 text-slate-400"></i>
+              <input type="text" id="searchLogInput" onkeyup="loadActivityLogs()" placeholder="Cari aktivitas, nama user, detail..."
+                class="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-xl">
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="font-semibold text-slate-600">Kategori:</span>
+              <select id="filterLogCategory" onchange="loadActivityLogs()" class="px-2.5 py-2 border border-slate-300 rounded-xl bg-white">
+                <option value="">Semua Kategori</option>
+                <option value="AUTH">AUTH (Login/Logout)</option>
+                <option value="ABSENSI">ABSENSI</option>
+                <option value="KARYAWAN">KARYAWAN</option>
+                <option value="SHIFT">SHIFT</option>
+                <option value="CUTI">CUTI / IZIN</option>
+                <option value="LEMBUR">LEMBUR</option>
+                <option value="PENGATURAN">PENGATURAN</option>
+                <option value="BACKUP">BACKUP / RESTORE</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Log Table -->
+          <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider font-semibold">
+                  <tr>
+                    <th class="py-3 px-4">Waktu</th>
+                    <th class="py-3 px-4">User</th>
+                    <th class="py-3 px-4">Kategori</th>
+                    <th class="py-3 px-4">Aktivitas / Aksi</th>
+                    <th class="py-3 px-4">Rincian Data</th>
+                    <th class="py-3 px-4">IP Address</th>
+                  </tr>
+                </thead>
+                <tbody id="activityLogsTableBody" class="divide-y divide-slate-100">
+                  <tr><td colspan="6" class="text-center py-6 text-slate-400">Memuat log aktivitas...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODALS CONTAINER -->
+  <!-- ============================================================== -->
+
+  <!-- Modal: Tambah/Edit Karyawan -->
+  <div id="modalEmployee" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 id="modalEmployeeTitle" class="text-base font-bold text-slate-900">Tambah Data Karyawan</h3>
+        <button onclick="closeModal('modalEmployee')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formEmployee" onsubmit="saveEmployee(event)" class="p-6 space-y-4 overflow-y-auto text-xs">
+        <input type="hidden" id="empId">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">NIP (Nomor Induk Pegawai)*</label>
+            <input type="text" id="empNip" required placeholder="EMP004" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">Nama Lengkap*</label>
+            <input type="text" id="empName" required placeholder="Nama Karyawan" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">Email*</label>
+            <input type="email" id="empEmail" required placeholder="nama@perusahaan.com" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">No. Telepon</label>
+            <input type="text" id="empPhone" placeholder="08123456789" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Password <span id="empPasswordHint" class="text-slate-400 font-normal">(Wajib untuk user baru)</span></label>
+          <input type="password" id="empPassword" placeholder="••••••••" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">Departemen / Jabatan</label>
+            <select id="empDepartment" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-white">
+              <option value="">Pilih Departemen</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">Shift Kerja</label>
+            <select id="empShift" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-white">
+              <option value="">Pilih Shift</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">Role Akun</label>
+            <select id="empRole" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-white">
+              <option value="karyawan">Karyawan</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">Status Akun</label>
+            <select id="empStatus" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-white">
+              <option value="aktif">Aktif</option>
+              <option value="nonaktif">Nonaktif</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Alamat Tempat Tinggal</label>
+          <textarea id="empAddress" rows="2" placeholder="Alamat lengkap..." class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Foto Profil (Avatar)</label>
+          <input type="file" id="empAvatarFile" accept="image/*" class="mt-1 block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700">
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalEmployee')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow">Simpan Karyawan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah/Edit Jabatan -->
+  <div id="modalDepartment" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 id="modalDeptTitle" class="text-base font-bold text-slate-900">Tambah Jabatan</h3>
+        <button onclick="closeModal('modalDepartment')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formDepartment" onsubmit="saveDepartment(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="deptId">
+        <div>
+          <label class="block font-semibold text-slate-700">Nama Jabatan / Departemen*</label>
+          <input type="text" id="deptName" required placeholder="Contoh: Keuangan & Pajak" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Deskripsi / Tugas</label>
+          <textarea id="deptDescription" rows="3" placeholder="Deskripsi divisi..." class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalDepartment')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah/Edit Shift -->
+  <div id="modalShift" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 id="modalShiftTitle" class="text-base font-bold text-slate-900">Tambah Shift Kerja</h3>
+        <button onclick="closeModal('modalShift')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formShift" onsubmit="saveShift(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="shiftId">
+        <div>
+          <label class="block font-semibold text-slate-700">Nama Shift*</label>
+          <input type="text" id="shiftNameInput" required placeholder="Contoh: Shift Pagi / Kantor" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">Jam Masuk (HH:mm)*</label>
+            <input type="time" id="shiftStartTimeInput" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">Jam Pulang (HH:mm)*</label>
+            <input type="time" id="shiftEndTimeInput" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Toleransi Keterlambatan (Menit)*</label>
+          <input type="number" id="shiftToleranceInput" min="0" max="120" value="15" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          <p class="text-[10px] text-slate-400 mt-1">Melebihi toleransi ini akan tercatat berstatus "Terlambat".</p>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalShift')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow">Simpan Shift</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Pengajuan Cuti / Izin / Sakit -->
+  <div id="modalLeave" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-base font-bold text-slate-900">Form Pengajuan Cuti, Izin & Sakit</h3>
+        <button onclick="closeModal('modalLeave')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formLeave" onsubmit="submitLeave(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700">Jenis Permohonan*</label>
+          <select id="leaveType" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-white font-medium">
+            <option value="cuti">Cuti Tahunan</option>
+            <option value="izin">Izin Urusan Pribadi / Keluarga</option>
+            <option value="sakit">Sakit (Disertai Surat Dokter)</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">Tanggal Mulai*</label>
+            <input type="date" id="leaveStartDate" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">Tanggal Selesai*</label>
+            <input type="date" id="leaveEndDate" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Alasan Permohonan*</label>
+          <textarea id="leaveReason" required rows="3" placeholder="Jelaskan alasan pengajuan cuti/izin secara lengkap..." class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Unggah Dokumen Pendukung (Surat Dokter / Formulir)</label>
+          <input type="file" id="leaveAttachment" class="mt-1 block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700">
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalLeave')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow">Kirim Pengajuan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Pengajuan Lembur -->
+  <div id="modalOvertime" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-base font-bold text-slate-900">Form Pengajuan Jam Lembur</h3>
+        <button onclick="closeModal('modalOvertime')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formOvertime" onsubmit="submitOvertime(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700">Tanggal Lembur*</label>
+          <input type="date" id="otDate" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">Jam Mulai (HH:mm)*</label>
+            <input type="time" id="otStartTime" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">Jam Selesai (HH:mm)*</label>
+            <input type="time" id="otEndTime" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Uraian Tugas / Alasan Lembur*</label>
+          <textarea id="otDescription" required rows="3" placeholder="Jelaskan pekerjaan atau target yang diselesaikan saat lembur..." class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalOvertime')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow">Kirim Pengajuan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Review Cuti / Lembur (Admin) -->
+  <div id="modalReviewAction" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 id="modalReviewTitle" class="text-base font-bold text-slate-900">Verifikasi Pengajuan</h3>
+        <button onclick="closeModal('modalReviewAction')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formReview" onsubmit="submitReview(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="reviewTargetType"> <!-- 'leave' or 'overtime' -->
+        <input type="hidden" id="reviewTargetId">
+        <div id="reviewTargetDetails" class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <!-- Populated dynamically -->
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Keputusan Review*</label>
+          <select id="reviewDecision" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-white font-bold">
+            <option value="disetujui" class="text-emerald-700">Disetujui (Approved)</option>
+            <option value="ditolak" class="text-red-700">Ditolak (Rejected)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Catatan Admin / HRD</label>
+          <textarea id="reviewAdminNotes" rows="2" placeholder="Catatan persetujuan atau alasan penolakan..." class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalReviewAction')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow">Simpan Keputusan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Test Notifikasi -->
+  <div id="modalTestNotif" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-base font-bold text-slate-900">Uji Coba Kirim Notifikasi</h3>
+        <button onclick="closeModal('modalTestNotif')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formTestNotif" onsubmit="handleSendTestNotification(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700">Channel Notifikasi*</label>
+          <select id="testNotifChannel" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl bg-white font-medium">
+            <option value="Telegram">Telegram Bot</option>
+            <option value="WhatsApp">WhatsApp Gateway</option>
+          </select>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Target Penerima (Nomor WA / Chat ID)*</label>
+          <input type="text" id="testNotifRecipient" required placeholder="08123456789 atau -100123456" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Pesan Pengujian*</label>
+          <textarea id="testNotifMessage" required rows="3" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">🔔 Tes Pesan dari Sistem Absensi Karyawan PT Nusantara Solusi Digital</textarea>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalTestNotif')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow">Kirim Sekarang</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Profil Saya -->
+  <div id="modalProfile" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 class="text-base font-bold text-slate-900">Profil Saya & Pengaturan Sandi</h3>
+        <button onclick="closeModal('modalProfile')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formProfile" onsubmit="saveProfile(event)" class="p-6 space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700">Nama Lengkap</label>
+          <input type="text" id="profName" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">No. Telepon</label>
+          <input type="text" id="profPhone" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Alamat</label>
+          <textarea id="profAddress" rows="2" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+        </div>
+        <div class="pt-2 border-t border-slate-100">
+          <p class="font-bold text-slate-700 mb-2">Ganti Kata Sandi (Opsional)</p>
+          <div class="space-y-2">
+            <div>
+              <label class="block text-slate-500">Password Saat Ini</label>
+              <input type="password" id="profCurrentPass" placeholder="••••••••" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+            </div>
+            <div>
+              <label class="block text-slate-500">Password Baru</label>
+              <input type="password" id="profNewPass" placeholder="Minimal 6 karakter" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+            </div>
+          </div>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalProfile')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-semibold shadow">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Tambah / Edit Titik Kantor -->
+  <div id="modalOffice" class="modal fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden">
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <h3 id="modalOfficeTitle" class="text-base font-bold text-slate-900">Tambah Titik Kantor Baru</h3>
+        <button onclick="closeModal('modalOffice')" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form id="formOffice" onsubmit="saveOfficeLocation(event)" class="p-6 space-y-4 text-xs">
+        <input type="hidden" id="officeModalId">
+        <div>
+          <label class="block font-semibold text-slate-700">Nama Kantor / Cabang*</label>
+          <input type="text" id="officeModalName" required placeholder="Contoh: Kantor Cabang Bandung" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Alamat Lengkap</label>
+          <textarea id="officeModalAddress" rows="2" placeholder="Jl. Asia Afrika No. 100..." class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-slate-700">Latitude*</label>
+            <input type="number" step="any" id="officeModalLat" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700">Longitude*</label>
+            <input type="number" step="any" id="officeModalLng" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+          </div>
+        </div>
+        <div>
+          <label class="block font-semibold text-slate-700">Batas Radius Geofence (Meter)*</label>
+          <input type="number" id="officeModalRadius" min="10" max="5000" value="100" required class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl font-mono">
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+          <input type="checkbox" id="officeModalIsPrimary" class="rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+          <label for="officeModalIsPrimary" class="font-medium text-slate-700">Jadikan Titik Kantor Utama (Primary)</label>
+        </div>
+        <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
+          <button type="button" onclick="closeModal('modalOffice')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>
+          <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold shadow">Simpan Titik Kantor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Client App Logic Script -->
+  <script src="/js/app.js"></script>
+</body>
+</html>

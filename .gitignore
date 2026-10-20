@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Local Executables & Tunneling tools
+cloudflared.exe
+*.exe
+
+# Logs & temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & local secrets
+.env
+.env.local
+
+# SQLite temporary WAL/SHM
+data/*-shm
+data/*-wal
+
+# OS files
+Thumbs.db
+.DS_Store

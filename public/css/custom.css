@@ -1,0 +1,114 @@
+/* Custom Styling for Aplikasi Absensi Karyawan */
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Glassmorphism subtle */
+.glass-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+}
+
+/* Animations */
+@keyframes pulse-slow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.95; }
+}
+
+.pulse-hover:hover {
+  animation: pulse-slow 2s infinite ease-in-out;
+}
+
+/* Print Styling for Official Reports */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  /* Hide navigation, sidebar, headers, buttons */
+  aside, header, #sidebar, .no-print, button, .modal, .swal2-container {
+    display: none !important;
+  }
+
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .print-break-inside-avoid {
+    break-inside: avoid;
+  }
+
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border: 1px solid #333333 !important;
+    padding: 6px 8px !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+.print-only {
+  display: none;
+}
+
+/* ============================================================== */
+/* HD QR CAMERA SCANNER STYLES                                   */
+/* ============================================================== */
+#qr-reader {
+  border: none !important;
+  width: 100% !important;
+}
+
+#qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 400px !important;
+  object-fit: cover !important;
+  border-radius: 1rem !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+#qr-reader__scan_region {
+  border-radius: 1rem !important;
+  overflow: hidden !important;
+}
+
+#qr-reader__scan_region video {
+  border-radius: 1rem !important;
+}
+
+#qr-reader__dashboard {
+  padding: 8px 0 !important;
+}
