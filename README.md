@@ -1,3 +1,13 @@
+---
+title: Aplikasi Absensi Karyawan
+emoji: 🏢
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # 📱 Aplikasi Absensi Karyawan Modern (Sistem Presensi Berbasis QR Code & GPS Geofencing)
 
 Aplikasi manajemen absensi dan kehadiran karyawan berbasis web modern, responsif, dan siap produksi. Dilengkapi dengan pemindaian QR Code (kamera smartphone/webcam), validasi koordinat GPS geofencing radius kantor, kalkulasi toleransi keterlambatan, shift kerja, pengajuan cuti/izin/sakit dengan lampiran dokumen, manajemen lembur, ekspor laporan Excel (.xlsx) & CSV, cetak resmi, backup/restore database SQL, notifikasi WhatsApp/Telegram, dan jejak audit aktivitas (activity logs).

@@ -10,7 +10,12 @@ RUN npm install
 
 COPY . .
 
-# Default port for HuggingFace (7860) or fallback (3050)
+# Create data dir and adjust permissions for Hugging Face non-root user (UID 1000)
+RUN mkdir -p /app/data && chown -R 1000:1000 /app
+
+USER 1000
+
+# Default port for Hugging Face Spaces is 7860
 ENV PORT=7860
 EXPOSE 7860
 
