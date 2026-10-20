@@ -1,5 +1,5 @@
 ---
-title: Aplikasi Absensi Karyawan
+title: Absensi Karyawanbnc
 emoji: 🏢
 colorFrom: blue
 colorTo: indigo
