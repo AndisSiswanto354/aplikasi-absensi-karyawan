@@ -1,0 +1,14 @@
+services:
+  absensi:
+    build: .
+    image: aplikasi-absensi-karyawan:latest
+    container_name: absensi-karyawan
+    restart: unless-stopped
+    ports:
+      - "3050:3050"
+    environment:
+      - PORT=3050
+      - NODE_ENV=production
+      - DATA_DIR=/app/data
+    volumes:
+      - ./data:/app/data

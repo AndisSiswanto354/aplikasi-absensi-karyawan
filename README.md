@@ -98,15 +98,26 @@ Aplikasi manajemen absensi dan kehadiran karyawan berbasis web modern, responsif
 
 ## 🚀 Panduan Menjalankan Aplikasi
 
-### 1. Prasyarat
+### 1. Menjalankan di Proxmox VE (LXC / VM) 24 Jam Nonstop ⭐
+Jika Anda memiliki server Proxmox, aplikasi ini dapat diinstal langsung dalam 1 perintah otomatis di LXC Container (Ubuntu/Debian):
+```bash
+curl -fsSL https://raw.githubusercontent.com/AndisSiswanto354/aplikasi-absensi-karyawan/main/install-proxmox.sh | bash
+```
+> 📖 Baca panduan lengkapnya di [PANDUAN_PROXMOX.md](PANDUAN_PROXMOX.md) untuk setup Cloudflare Tunnel (HTTPS) dan Docker Compose di Proxmox.
+
+---
+
+### 2. Menjalankan di Komputer Lokal / VPS
+
+#### Prasyarat
 - Node.js (v18 atau lebih baru)
 
-### 2. Pemasangan Dependensi (jika baru diunduh)
+#### Pemasangan Dependensi (jika baru diunduh)
 ```bash
 npm install
 ```
 
-### 3. Menjalankan Server
+#### Menjalankan Server
 ```bash
 npm start
 ```
@@ -115,7 +126,7 @@ Atau:
 node server.js
 ```
 
-### 4. Akses Web Browser
+#### Akses Web Browser
 - 🌐 **Dashboard Utama**: [http://localhost:3050](http://localhost:3050)
 - 📺 **Layar QR Kantor (Lobby Display)**: [http://localhost:3050/qr-display](http://localhost:3050/qr-display)
 
