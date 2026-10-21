@@ -2,6 +2,8 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { initDb } = require('./database');
 
 // Initialize database schema and seeds
@@ -10,8 +12,43 @@ initDb();
 const app = express();
 const PORT = process.env.PORT || 3050;
 
-// Trust reverse proxies (Render, Railway, Cloudflare, etc.)
+// Trust reverse proxies (Cloudflare, Render, Railway, Proxmox, etc.)
 app.set('trust proxy', 1);
+
+// Security Headers via Helmet (Configured for CDN & Map Tiles)
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.tailwindcss.com", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:", "https:", "http:"],
+      connectSrc: ["'self'", "https:", "http:", "ws:", "wss:"]
+    }
+  },
+  crossOriginEmbedderPolicy: false
+}));
+
+// Global Rate Limiter: 300 requests per 15 minutes per IP
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi dalam beberapa menit.' }
+});
+app.use('/api/', globalLimiter);
+
+// Strict Rate Limiter for Login: 15 attempts per 15 minutes per IP
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Terlalu banyak percobaan login gagal. Demi keamanan, akun dibekukan sementara selama 15 menit.' }
+});
+app.use('/api/auth/login', authLimiter);
 
 // Middleware
 app.use(cors());
