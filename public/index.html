@@ -5,12 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Aplikasi Absensi Karyawan - Sistem Presensi Modern</title>
 
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif']
+          },
           colors: {
             brand: {
               50: '#eff6ff',
@@ -287,7 +295,7 @@
           <!-- Welcome Banner -->
           <div class="bg-gradient-to-r from-brand-600 via-indigo-600 to-indigo-800 rounded-2xl p-6 text-white shadow-md relative overflow-hidden">
             <div class="relative z-10">
-              <h2 class="text-2xl font-bold">Selamat Datang, <span id="dashWelcomeName">Nama</span>! 👋</h2>
+              <h2 class="text-2xl font-bold">Selamat Datang, <span id="dashWelcomeName">Nama</span></h2>
               <p class="text-indigo-100 text-sm mt-1 max-w-xl">
                 Aplikasi Absensi Karyawan terintegrasi QR Code Scanner, Validasi GPS Geofencing, Shift Kerja, dan Manajemen Lembur.
               </p>
@@ -549,7 +557,7 @@
                   </label>
                   <select id="selectAttendanceOffice" onchange="onAttendanceOfficeChange(this.value)"
                     class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs font-semibold bg-white text-slate-800 focus:ring-2 focus:ring-brand-500">
-                    <option value="auto">📍 Otomatis Deteksi Kantor Terdekat</option>
+                    <option value="auto">[Auto] Deteksi Kantor Terdekat</option>
                   </select>
                 </div>
 
@@ -1803,7 +1811,7 @@
         </div>
         <div>
           <label class="block font-semibold text-slate-700">Pesan Pengujian*</label>
-          <textarea id="testNotifMessage" required rows="3" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">🔔 Tes Pesan dari Sistem Absensi Karyawan PT Nusantara Solusi Digital</textarea>
+          <textarea id="testNotifMessage" required rows="3" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded-xl">[Notifikasi] Tes Pesan dari Sistem Absensi Karyawan PT Nusantara Solusi Digital</textarea>
         </div>
         <div class="pt-4 border-t border-slate-100 flex justify-end space-x-2">
           <button type="button" onclick="closeModal('modalTestNotif')" class="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl font-semibold">Batal</button>

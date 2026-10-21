@@ -300,11 +300,11 @@ function renderAttendanceOfficeOptions(offices) {
   const select = document.getElementById('selectAttendanceOffice');
   if (!select) return;
   const currentVal = selectedAttendanceOfficeId;
-  let optionsHtml = `<option value="auto">📍 Otomatis Deteksi Kantor Terdekat</option>`;
+  let optionsHtml = `<option value="auto">[Auto] Deteksi Kantor Terdekat</option>`;
   if (offices && offices.length > 0) {
     optionsHtml += offices.map(o => `
       <option value="${o.id}">
-        ${o.is_primary ? '🏢 (Utama) ' : '🏢 '}${o.name} - Radius: ${o.radius}m
+        ${o.is_primary ? '[Utama] ' : ''}${o.name} - Radius: ${o.radius}m
       </option>
     `).join('');
   }
@@ -1120,7 +1120,7 @@ function populateCameraDeviceOptions(devices, activeId) {
     select.innerHTML = devices.map((d, idx) => {
       const isBack = /back|rear|environment|belakang/i.test(d.label);
       const isSelected = activeId ? d.id === activeId : (isBack || idx === 0);
-      return `<option value="${d.id}" ${isSelected ? 'selected' : ''}>📷 ${d.label || 'Kamera ' + (idx + 1)} ${isBack ? '(HD Belakang)' : ''}</option>`;
+      return `<option value="${d.id}" ${isSelected ? 'selected' : ''}>${d.label || 'Kamera ' + (idx + 1)} ${isBack ? '(HD Belakang)' : ''}</option>`;
     }).join('');
   } else {
     container.classList.add('hidden');
@@ -1202,11 +1202,12 @@ async function submitAttendance() {
 
     if (data.success) {
       const officeName = data.office_name || data.record?.office_name || (userCoordinates.matchedOffice ? userCoordinates.matchedOffice.name : null);
-      const officeLabel = officeName ? `<br><small class="text-emerald-700 font-semibold">📍 Lokasi Kantor: ${officeName}</small>` : '';
+      const officeLabel = officeName ? `<br><small class="text-emerald-700 font-semibold inline-flex items-center gap-1"><i data-lucide="map-pin" class="w-3.5 h-3.5 inline"></i> Lokasi Kantor: ${officeName}</small>` : '';
       Swal.fire({
         icon: 'success',
         title: 'Absensi Berhasil!',
-        html: `<b>${data.message}</b>${officeLabel}<br><small class="text-slate-500">Jarak tercatat: ${userCoordinates.distance}m</small>`
+        html: `<b>${data.message}</b>${officeLabel}<br><small class="text-slate-500">Jarak tercatat: ${userCoordinates.distance}m</small>`,
+        didOpen: () => { if (window.lucide) lucide.createIcons(); }
       });
 
       // Clear input and reload dashboard

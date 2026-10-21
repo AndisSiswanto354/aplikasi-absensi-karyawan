@@ -70,10 +70,10 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`====================================================`);
-  console.log(`🚀 Aplikasi Absensi Karyawan berjalan aktif!`);
-  console.log(`📡 URL Utama: http://localhost:${PORT}`);
-  console.log(`📺 Layar QR Kantor (Display): http://localhost:${PORT}/qr-display`);
-  console.log(`👤 Akun Demo Admin: admin@perusahaan.com | admin123`);
-  console.log(`👤 Akun Demo Karyawan: budi@perusahaan.com | karyawan123`);
+  console.log(`[SERVER] Aplikasi Absensi Karyawan berjalan aktif!`);
+  console.log(`[URL]    http://localhost:${PORT}`);
+  console.log(`[KIOSK]  http://localhost:${PORT}/qr-display`);
+  console.log(`[ADMIN]  admin@perusahaan.com | admin123`);
+  console.log(`[USER]   budi@perusahaan.com | karyawan123`);
   console.log(`====================================================`);
 });

@@ -16,6 +16,11 @@ yarn-error.log*
 .env
 .env.local
 
+# Uploads
+public/uploads/**
+!public/uploads/**/
+!public/uploads/**/.gitkeep
+
 # SQLite temporary WAL/SHM
 data/*-shm
 data/*-wal

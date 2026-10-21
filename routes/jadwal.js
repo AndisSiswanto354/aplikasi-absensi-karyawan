@@ -212,7 +212,7 @@ router.post('/leaves', requireAuth, upload.single('attachment'), (req, res) => {
     sendNotification({
       channel: 'Telegram',
       recipient: '',
-      message: `📋 <b>Pengajuan Permohonan Baru:</b>\nKaryawan: ${req.session.user.name} (${req.session.user.nip})\nJenis: ${type.toUpperCase()}\nPeriode: ${start_date} s/d ${end_date} (${totalDays} hari)\nAlasan: ${reason}`,
+      message: `<b>[Pengajuan Permohonan Baru]</b>\nKaryawan: ${req.session.user.name} (${req.session.user.nip})\nJenis: ${type.toUpperCase()}\nPeriode: ${start_date} s/d ${end_date} (${totalDays} hari)\nAlasan: ${reason}`,
       autoOnly: true
     });
 

@@ -95,7 +95,7 @@ router.post('/', requireAuth, (req, res) => {
     sendNotification({
       channel: 'Telegram',
       recipient: '',
-      message: `⚡ <b>Pengajuan Lembur Baru:</b>\nKaryawan: ${req.session.user.name} (${req.session.user.nip})\nTanggal: ${date} (${start_time} - ${end_time})\nDurasi: ${totalHours} Jam\nUraian: ${task_description}`,
+      message: `<b>[Pengajuan Lembur Baru]</b>\nKaryawan: ${req.session.user.name} (${req.session.user.nip})\nTanggal: ${date} (${start_time} - ${end_time})\nDurasi: ${totalHours} Jam\nUraian: ${task_description}`,
       autoOnly: true
     });
 

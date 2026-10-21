@@ -197,7 +197,7 @@ router.post('/check-in', requireAuth, async (req, res) => {
       sendNotification({
         channel: 'Telegram',
         recipient: '',
-        message: `⚠️ <b>Peringatan Keterlambatan:</b>\nKaryawan: ${req.session.user.name} (${req.session.user.nip})\nLokasi: ${targetOffice.name}\nJam Masuk: ${nowTime}\nStatus: ${lateDetails}`,
+        message: `<b>[Peringatan Keterlambatan]</b>\nKaryawan: ${req.session.user.name} (${req.session.user.nip})\nLokasi: ${targetOffice.name}\nJam Masuk: ${nowTime}\nStatus: ${lateDetails}`,
         autoOnly: true
       });
     }

@@ -12,7 +12,7 @@ async function runTests() {
   // Wait 1s for server to listen
   await new Promise(r => setTimeout(r, 1000));
   const baseUrl = `http://localhost:${PORT}`;
-  console.log(`\n🧪 Memulai Pengujian Otomatis Fitur Aplikasi di ${baseUrl}...\n`);
+  console.log(`\n[TEST] Memulai Pengujian Otomatis Fitur Aplikasi di ${baseUrl}...\n`);
 
   let cookieAdmin = '';
   let cookieKaryawan = '';
@@ -23,14 +23,14 @@ async function runTests() {
     const pubRes = await fetch(`${baseUrl}/api/pengaturan/public`);
     const pubData = await pubRes.json();
     console.assert(pubData.success && pubData.settings.company_name, 'Public settings failed');
-    console.log('✅ Public Settings OK:', pubData.settings.company_name);
+    console.log('[PASS] Public Settings OK:', pubData.settings.company_name);
 
     // Test 2: QR Code Generation
     console.log('\nTest 2: QR Code Generator Image');
     const qrRes = await fetch(`${baseUrl}/api/pengaturan/qr`);
     const qrData = await qrRes.json();
     console.assert(qrData.success && qrData.qr_image.startsWith('data:image/png'), 'QR code image failed');
-    console.log('✅ QR Image Generated OK (Token:', qrData.token, ')');
+    console.log('[PASS] QR Image Generated OK (Token:', qrData.token, ')');
 
     // Test 3: Admin Login
     console.log('\nTest 3: Autentikasi Admin');
@@ -42,7 +42,7 @@ async function runTests() {
     const adminLoginData = await adminLoginRes.json();
     cookieAdmin = adminLoginRes.headers.get('set-cookie');
     console.assert(adminLoginData.success && adminLoginData.user.role === 'admin', 'Admin login failed');
-    console.log('✅ Admin Login OK:', adminLoginData.user.name, `(${adminLoginData.user.role})`);
+    console.log('[PASS] Admin Login OK:', adminLoginData.user.name, `(${adminLoginData.user.role})`);
 
     // Test 4: Karyawan Login
     console.log('\nTest 4: Autentikasi Karyawan');
@@ -54,7 +54,7 @@ async function runTests() {
     const userLoginData = await userLoginRes.json();
     cookieKaryawan = userLoginRes.headers.get('set-cookie');
     console.assert(userLoginData.success && userLoginData.user.role === 'karyawan', 'Karyawan login failed');
-    console.log('✅ Karyawan Login OK:', userLoginData.user.name, `(${userLoginData.user.role})`);
+    console.log('[PASS] Karyawan Login OK:', userLoginData.user.name, `(${userLoginData.user.role})`);
 
     // Test 5: Check-in Outside Geofence (Should be blocked)
     console.log('\nTest 5: Validasi Geofencing GPS (Di Luar Radius Kantor -> Harus Ditolak)');
@@ -69,7 +69,7 @@ async function runTests() {
     });
     const outsideData = await outsideRes.json();
     console.assert(!outsideData.success, 'Should reject outside radius');
-    console.log('✅ Geofence Rejection OK:', outsideData.message);
+    console.log('[PASS] Geofence Rejection OK:', outsideData.message);
 
     // Test 6: Check-in Inside Geofence (Valid coordinates & token)
     console.log('\nTest 6: Validasi Absensi Masuk (Scan QR + GPS Valid)');
@@ -84,7 +84,7 @@ async function runTests() {
       })
     });
     const validInData = await validInRes.json();
-    console.log('✅ Check-In Response:', validInData.message);
+    console.log('[PASS] Check-In Response:', validInData.message);
 
     // Test 7: Riwayat Absensi
     console.log('\nTest 7: Riwayat Absensi & Rekap');
@@ -93,7 +93,7 @@ async function runTests() {
     });
     const histData = await histRes.json();
     console.assert(histData.success && histData.records.length > 0, 'History should have records');
-    console.log('✅ Riwayat Absensi OK, Total record:', histData.records.length, 'Summary:', histData.summary);
+    console.log('[PASS] Riwayat Absensi OK, Total record:', histData.records.length, 'Summary:', histData.summary);
 
     // Test 8: Pengajuan Cuti / Izin
     console.log('\nTest 8: Pengajuan Cuti/Izin Karyawan');
@@ -109,7 +109,7 @@ async function runTests() {
     });
     const leaveData = await leaveRes.json();
     console.assert(leaveData.success, 'Leave submission failed');
-    console.log('✅ Pengajuan Cuti OK:', leaveData.message);
+    console.log('[PASS] Pengajuan Cuti OK:', leaveData.message);
 
     // Test 9: Pengajuan Lembur (Overtime)
     console.log('\nTest 9: Pengajuan Jam Lembur');
@@ -125,7 +125,7 @@ async function runTests() {
     });
     const otData = await otRes.json();
     console.assert(otData.success, 'Overtime submission failed');
-    console.log('✅ Pengajuan Lembur OK:', otData.message);
+    console.log('[PASS] Pengajuan Lembur OK:', otData.message);
 
     // Test 10: Admin Approval for Leave
     console.log('\nTest 10: Persetujuan (Approval) Cuti oleh Admin');
@@ -142,7 +142,7 @@ async function runTests() {
       });
       const reviewData = await reviewRes.json();
       console.assert(reviewData.success, 'Review failed');
-      console.log('✅ Persetujuan Cuti OK:', reviewData.message);
+      console.log('[PASS] Persetujuan Cuti OK:', reviewData.message);
     }
 
     // Test 11: Export Laporan Excel
@@ -153,7 +153,7 @@ async function runTests() {
     console.assert(excelRes.status === 200, 'Excel export failed');
     const excelContentType = excelRes.headers.get('content-type');
     console.assert(excelContentType.includes('spreadsheetml'), 'Should return spreadsheet mime');
-    console.log('✅ Export Excel OK (Content-Type:', excelContentType, ')');
+    console.log('[PASS] Export Excel OK (Content-Type:', excelContentType, ')');
 
     // Test 12: Backup Database SQL
     console.log('\nTest 12: Backup Database Manual (SQL Dump)');
@@ -162,7 +162,7 @@ async function runTests() {
     });
     const sqlDump = await backupRes.text();
     console.assert(sqlDump.includes('CREATE TABLE') && sqlDump.includes('INSERT INTO'), 'SQL dump invalid');
-    console.log('✅ Backup SQL OK, ukuran file:', sqlDump.length, 'karakter');
+    console.log('[PASS] Backup SQL OK, ukuran file:', sqlDump.length, 'karakter');
 
     // Test 13: Activity Audit Logs
     console.log('\nTest 13: Log Audit Aktivitas Sistem');
@@ -171,12 +171,12 @@ async function runTests() {
     });
     const logsData = await logsRes.json();
     console.assert(logsData.success && logsData.logs.length > 0, 'Audit logs empty');
-    console.log('✅ Log Aktivitas OK, tercatat', logsData.logs.length, 'aktivitas audit.');
+    console.log('[PASS] Log Aktivitas OK, tercatat', logsData.logs.length, 'aktivitas audit.');
 
-    console.log('\n🎉 SEMUA 13 PENGUJIAN FITUR UTAMA LULUS 100% TANPA KESALAHAN! 🎉\n');
+    console.log('\n[SUCCESS] SEMUA 13 PENGUJIAN FITUR UTAMA LULUS 100% TANPA KESALAHAN!\n');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Test failed with error:', err);
+    console.error('[FAIL] Test failed with error:', err);
     process.exit(1);
   }
 }
