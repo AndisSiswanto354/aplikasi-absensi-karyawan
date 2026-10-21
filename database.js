@@ -2,6 +2,18 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
+let pool = null;
+const isPostgres = !!process.env.DATABASE_URL;
+if (isPostgres) {
+  const { Pool } = require('pg');
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    max: 20
+  });
+}
 
 const dataDir = process.env.DATA_DIR || path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
@@ -10,12 +22,61 @@ if (!fs.existsSync(dataDir)) {
 const dbPath = process.env.DB_PATH || path.join(dataDir, 'absensi.db');
 const db = new Database(dbPath);
 
+// Attach PostgreSQL pool and async helpers to db
+db.isPostgres = isPostgres;
+db.pool = pool;
+
+function convertSql(sql) {
+  let idx = 1;
+  return sql.replace(/\?/g, () => `$${idx++}`);
+}
+
+db.get = async function(sql, ...params) {
+  if (isPostgres && pool) {
+    const res = await pool.query(convertSql(sql), params);
+    return res.rows[0];
+  }
+  return db.prepare(sql).get(...params);
+};
+
+db.all = async function(sql, ...params) {
+  if (isPostgres && pool) {
+    const res = await pool.query(convertSql(sql), params);
+    return res.rows;
+  }
+  return db.prepare(sql).all(...params);
+};
+
+db.run = async function(sql, ...params) {
+  if (isPostgres && pool) {
+    let pgSql = sql;
+    if (/^\s*insert\s+into/i.test(sql) && !/returning/i.test(sql)) {
+      pgSql += ' RETURNING id';
+    }
+    const res = await pool.query(convertSql(pgSql), params);
+    return {
+      lastInsertRowid: res.rows[0]?.id || 0,
+      changes: res.rowCount
+    };
+  }
+  return db.prepare(sql).run(...params);
+};
+
 // Enable WAL mode for high performance
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 // Initialize database schema and seeds
 function initDb() {
+  if (isPostgres && pool) {
+    pool.query('SELECT current_database(), current_user').then(r => {
+      console.log(`[DATABASE] Terhubung ke Supabase PostgreSQL Enterprise (${r.rows[0].current_database} as ${r.rows[0].current_user})`);
+    }).catch(err => {
+      console.error('[DATABASE] Gagal koneksi Supabase:', err.message);
+    });
+    return;
+  }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS departments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
