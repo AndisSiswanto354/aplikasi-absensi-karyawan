@@ -21,6 +21,10 @@ public/uploads/**
 !public/uploads/**/
 !public/uploads/**/.gitkeep
 
+# Cloudflare Wrangler Secrets
+wrangler.toml
+.wrangler/
+
 # SQLite temporary WAL/SHM
 data/*-shm
 data/*-wal

@@ -1,0 +1,13 @@
+name = "absensi-karyawan"
+main = "worker.js"
+compatibility_date = "2024-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[vars]
+NODE_ENV = "production"
+DATABASE_URL = "postgresql://postgres.[REF]:[PASSWORD]@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres"
+SESSION_SECRET = "absensi-karyawan-super-secret-key-2026-enterprise"
